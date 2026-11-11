@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSB Academy</title>
+<style>
+:root{--navy:#10243a;--blue:#1f5d8f;--gold:#e7b64b;--bg:#f3f6fa}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#172536}
+header{background:linear-gradient(130deg,#10243a,#1f5d8f);color:white;padding:24px 18px 20px;border-radius:0 0 22px 22px}
+header h1{margin:0;font-size:24px}header p{margin:7px 0 0;color:#dce8f3}
+main{padding:16px;max-width:760px;margin:auto}.panel,.course,.lesson{background:white;border-radius:15px;padding:16px;margin:12px 0;box-shadow:0 3px 14px #10243a10}
+.stats{display:flex;gap:10px}.stat{flex:1;background:#fff;border-radius:13px;padding:12px;text-align:center}.stat b{display:block;font-size:22px;color:var(--blue)}
+button{border:0;border-radius:10px;padding:11px 14px;background:var(--blue);color:white;font-weight:bold;margin:5px 4px 0 0}
+button.secondary{background:#e7eef5;color:#173b5a}button.gold{background:var(--gold);color:#263344}
+.course{display:flex;justify-content:space-between;align-items:center;gap:12px}.course h3{margin:0 0 5px}.muted{color:#607184;font-size:13px}
+.hidden{display:none}.bar{height:8px;background:#e5ebf1;border-radius:9px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;background:#2b8a69;width:0}
+.lessonText{line-height:1.55}.option{display:block;width:100%;text-align:left;background:#edf3f8;color:#173b5a;margin:8px 0}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+</style></head><body>
+<header><h1>SSB Academy</h1><p>Dream to Become an Officer</p></header>
+<main>
+<div id="home">
+<div class="stats"><div class="stat"><b id="streak">0</b><span class="muted">Day streak</span></div><div class="stat"><b id="minutes">0</b><span class="muted">Minutes today</span></div></div>
+<div class="panel"><h3>Daily consistency</h3><p class="muted">Study for at least 10 minutes today to maintain your streak.</p><button onclick="startTimer()">Start 10-minute study timer</button><button class="secondary" onclick="stopTimer()">Stop</button><p id="timer">10:00</p></div>
+<h2>Courses</h2><div id="courses"></div>
+</div>
+<div id="courseView" class="hidden"><button class="secondary" onclick="goHome()">← Courses</button><h2 id="courseTitle"></h2><p class="muted" id="courseDesc"></p><div id="lessons"></div><button class="gold" onclick="showQuiz()">Take course practice</button></div>
+<div id="lessonView" class="hidden"><button class="secondary" onclick="backCourse()">← Back</button><h2 id="lessonTitle"></h2><div class="panel"><div class="lessonText" id="lessonBody"></div></div><button onclick="nextLesson()">Next lesson →</button></div>
+<div id="quizView" class="hidden"><button class="secondary" onclick="backCourse()">← Course</button><h2>Practice test</h2><div id="quiz"></div></div>
+</main>
+<script>
+const courses=[
+["Personality Development","OLQs, self-awareness, communication and officer-like habits.",["Understanding OLQs","Self-awareness and strengths","Communication skills","Leadership and teamwork","Discipline and time management"]],
+["OIR Complete","Verbal and non-verbal reasoning practice.",["OIR test overview","Number and letter series","Analogy and classification","Coding-decoding","Spatial and pattern reasoning"]],
+["PP&DT and Narration","Picture perception, story writing and narration.",["PP&DT process","Observe and identify key details","Build a clear story","Narration structure","Group discussion basics"]],
+["Psychology Tests","TAT, WAT, SRT, SDT and response practice.",["Psychology tests overview","Thematic Apperception Test","Word Association Test","Situation Reaction Test","Self Description Test"]],
+["GD and GTO Tasks","Group discussion, planning exercise and outdoor task awareness.",["Group discussion","Group Planning Exercise","Lecturette","Progressive and Half Group Tasks","Individual obstacles and command task","Snake race and final group task"]],
+["Personal Interview","Prepare clear, honest and structured interview answers.",["Interview purpose","Personal and family questions","Education and interests","Strengths, weaknesses and achievements","Answering with examples"]],
+["Conference","Understand the SSB conference stage.",["Conference overview","How to communicate clearly","Reflecting on performance"]],
+["Defence Knowledge","Public-awareness basics about India's Armed Forces.",["Indian Army overview","Indian Navy overview","Indian Air Force overview","Ranks and commands: basic awareness","Defence ethos and national service"]]
+];
+const lessonText=[
+"Learn the purpose of this topic and connect it with your own genuine experiences. Be clear, balanced and consistent. Use examples rather than memorised claims.",
+"Practise the basic method first. Read the instruction carefully, identify the information given, and solve step by step. Accuracy matters as much as speed.",
+"Observe the available information carefully. Build a simple, realistic response with a clear beginning, practical action and sensible outcome.",
+"Respond naturally and constructively. Keep your answers realistic, responsible and consistent with your actual personality and experiences.",
+"Work cooperatively. Listen to others, communicate briefly, contribute useful ideas and support the group's shared objective.",
+"Give honest, specific answers. Explain what you did, why you did it and what you learned. Avoid exaggeration or memorised statements."
+];
+let currentCourse=0,currentLesson=0,timerInt=null,seconds=600;
+function day(){return new Date().toISOString().slice(0,10)}
+function loadStats(){let d=JSON.parse(localStorage.getItem("ssba_stats")||"{}");document.getElementById("minutes").textContent=d.day===day()?(d.minutes||0):0;document.getElementById("streak").textContent=d.streak||0}
+function renderCourses(){let el=document.getElementById("courses");el.innerHTML="";courses.forEach((c,i)=>{let div=document.createElement("div");div.className="course";div.innerHTML=`<div><h3>${i+1}. ${c[0]}</h3><div class="muted">${c[1]}</div><div class="muted">${c[2].length} lessons</div></div><button>Open</button>`;div.querySelector("button").onclick=()=>openCourse(i);el.appendChild(div)})}
+function show(id){["home","courseView","lessonView","quizView"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id))}
+function goHome(){show("home")}
+function openCourse(i){currentCourse=i;document.getElementById("courseTitle").textContent=courses[i][0];document.getElementById("courseDesc").textContent=courses[i][1];let el=document.getElementById("lessons");el.innerHTML="";courses[i][2].forEach((t,j)=>{let b=document.createElement("button");b.className="secondary";b.textContent=(j+1)+". "+t;b.onclick=()=>openLesson(j);el.appendChild(b)});show("courseView")}
+function openLesson(j){currentLesson=j;document.getElementById("lessonTitle").textContent=courses[currentCourse][2][j];document.getElementById("lessonBody").textContent=lessonText[(currentCourse+j)%lessonText.length];show("lessonView")}
+function backCourse(){openCourse(currentCourse)}
+function nextLesson(){if(currentLesson+1<courses[currentCourse][2].length)openLesson(currentLesson+1);else showQuiz()}
+function showQuiz(){let qs=[["Which approach is best in an interview?",["Honest and specific answers","Memorised claims","Exaggeration"],0],["In a group task, what should you do?",["Ignore others","Listen and contribute","Interrupt everyone"],1],["What should a PP&DT story have?",["A practical, coherent sequence","Unrelated events","Only a dramatic ending"],0]];let el=document.getElementById("quiz");el.innerHTML="";qs.forEach((q,i)=>{let box=document.createElement("div");box.className="panel";box.innerHTML=`<b>${i+1}. ${q[0]}</b>`;q[1].forEach((o,k)=>{let b=document.createElement("button");b.className="option";b.textContent=o;b.onclick=()=>{b.textContent=o+(k===q[2]?" ✓ Correct":" — Try again");b.disabled=true};box.appendChild(b)});el.appendChild(box)});show("quizView")}
+function startTimer(){if(timerInt)return;timerInt=setInterval(()=>{seconds--;document.getElementById("timer").textContent=Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");if(seconds<=0){clearInterval(timerInt);timerInt=null;let d=JSON.parse(localStorage.getItem("ssba_stats")||"{}");let today=day();if(d.day!==today){let y=new Date(Date.now()-86400000).toISOString().slice(0,10);d.streak=d.day===y?(d.streak||0)+1:1;d.day=today;d.minutes=0}d.minutes=(d.minutes||0)+10;localStorage.setItem("ssba_stats",JSON.stringify(d));seconds=600;document.getElementById("timer").textContent="10:00";loadStats();alert("10-minute target completed!");}},1000)}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null}}
+renderCourses();loadStats();
+</script></body></html>
